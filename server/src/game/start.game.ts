@@ -1,0 +1,52 @@
+import Matter from "matter-js";
+import { io } from "../app";
+import { initializeMovement } from "./movement.game";
+import { initializePlayers } from "./players.game";
+import { generateRandomWalls, intializeWalls } from "./walls.game";
+
+// Create engine and world
+const engine = Matter.Engine.create();
+const world = engine.world;
+
+// World proportions
+const worldWidth = 400;
+const worldHeight = 400;
+
+// Turn gravity off
+engine.gravity.y = 0;
+engine.gravity.x = 0;
+
+export const startGame = () => {
+  // Store players here
+  const players = new Map<string, Matter.Body>();
+
+  const randomWalls = generateRandomWalls(worldWidth, worldHeight);
+
+  // On player connection
+  io.on("connection", (socket) => {
+    console.log(`Player connected: ${socket.id}`);
+
+    // Add walls
+    intializeWalls(world, worldWidth, worldHeight, socket, randomWalls);
+
+    // Players
+    initializePlayers(world, players, socket, worldHeight, worldWidth);
+
+    // Movement
+    initializeMovement(engine, socket, players);
+
+    // Player disconnected
+    socket.on("disconnect", () => {
+      console.log(`Player disconnected: ${socket.id}`);
+
+      // Remove player if disconnected
+      const player = players.get(socket.id);
+      if (player) {
+        Matter.World.remove(world, player);
+        players.delete(socket.id);
+
+        io.emit("removePlayer", socket.id);
+      }
+    });
+  });
+};
