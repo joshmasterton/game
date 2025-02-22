@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { socket } from "../config/socket.config"; // Assuming socket.config.js handles the socket initialization
 import Phaser from "phaser";
 import player from "../assets/box.png";
+import ai from "../assets/box1.png";
 
 export const Game = () => {
   const gameContainerRef = useRef<HTMLDivElement>(null);
@@ -30,34 +31,64 @@ export const Game = () => {
 
     function preload(this: Phaser.Scene) {
       this.load.image("player", player);
+      this.load.image("AI", ai);
     }
 
     function create(this: Phaser.Scene) {
+      // Set world and camera bounds
+      this.cameras.main.setBounds(0, 0, 2000, 2000);
+      this.physics.world.setBounds(0, 0, 2000, 2000);
+
+      // Client is ready to emit to server
       socket.emit("ready");
 
-      // Listen for the "init" event after connection
-      socket.on("init", (data: { [id: string]: { x: number; y: number } }) => {
-        // Create sprite if no player or set position if player exists
-        Object.entries(data).forEach(([id, { x, y }]) => {
-          if (!players.has(id)) {
-            const sprite = this.physics.add.sprite(x, y, "player");
-            const scaleX = 30 / sprite.width;
-            const scaleY = 30 / sprite.height;
+      // Listen for the init event after connection
+      socket.on(
+        "init",
+        (data: { [id: string]: { x: number; y: number; isAI: boolean } }) => {
+          // Create sprite if no player or set position if player exists
+          Object.entries(data).forEach(([id, { x, y, isAI }]) => {
+            if (!players.has(id)) {
+              const sprite = this.physics.add.sprite(
+                x,
+                y,
+                isAI ? "AI" : "player"
+              );
+              const scaleX = 30 / sprite.width;
+              const scaleY = 30 / sprite.height;
 
-            sprite.setScale(scaleX, scaleY);
+              sprite.setScale(scaleX, scaleY);
 
-            players.set(id, sprite);
-            positions.set(id, { x, y });
-          } else {
-            players.get(id)?.setPosition(x, y);
-            positions.set(id, { x, y });
-          }
-        });
-      });
+              players.set(id, sprite);
+              positions.set(id, { x, y });
+
+              // Make camera follow player
+              if (id === socket.id) {
+                this.cameras.main.startFollow(sprite, true, 0.25, 0.25);
+              }
+            } else {
+              players.get(id)?.setPosition(x, y);
+              positions.set(id, { x, y });
+            }
+          });
+        }
+      );
 
       // Handle player movement updates
       socket.on(
         "update",
+        (data: { [id: string]: { x: number; y: number } }) => {
+          Object.entries(data).forEach(([id, { x, y }]) => {
+            if (players.has(id)) {
+              positions.set(id, { x, y });
+            }
+          });
+        }
+      );
+
+      // Handle AI player movement updates
+      socket.on(
+        "updateAI",
         (data: { [id: string]: { x: number; y: number } }) => {
           Object.entries(data).forEach(([id, { x, y }]) => {
             if (players.has(id)) {
@@ -81,7 +112,6 @@ export const Game = () => {
         ) => {
           // Add walls to scene
           if (walls) {
-            console.log(walls);
             walls.forEach((wall) => {
               this.physics.add
                 .staticImage(wall.x, wall.y, "player")
@@ -138,17 +168,21 @@ export const Game = () => {
           if (player) {
             const currentPosition = player.getCenter();
 
+            // Adjust the pointer based on camera position
+            const adjustedPointerX = pointer.x + this.cameras.main.scrollX;
+            const adjustedPointerY = pointer.y + this.cameras.main.scrollY;
+
             const angle = Phaser.Math.Angle.Between(
               currentPosition?.x,
               currentPosition?.y,
-              pointer.x,
-              pointer.y
+              adjustedPointerX,
+              adjustedPointerY
             );
             const distance = Phaser.Math.Distance.Between(
               currentPosition.x,
               currentPosition.y,
-              pointer.x,
-              pointer.y
+              adjustedPointerX,
+              adjustedPointerY
             );
 
             movement.x = Math.cos(angle) * (distance / 10);

@@ -3,15 +3,10 @@ import { io } from "../app";
 import { Socket } from "socket.io";
 
 export const initializeMovement = (
-  engine: Matter.Engine,
   socket: Socket,
-  players: Map<string, Matter.Body>
+  players: Map<string, Matter.Body>,
+  AIPlayers: Map<string, Matter.Body>
 ) => {
-  // Engine update
-  setInterval(() => {
-    Matter.Engine.update(engine, 1000 / 60);
-  }, 1000 / 60);
-
   // Update players movement
   setInterval(() => {
     io.emit(
@@ -25,9 +20,22 @@ export const initializeMovement = (
     );
   }, 100);
 
+  // Update AI players movements
+  setInterval(() => {
+    io.emit(
+      "updateAI",
+      Object.fromEntries(
+        Array.from(AIPlayers, ([id, body]) => [
+          id,
+          { x: body.position.x, y: body.position.y },
+        ])
+      )
+    );
+  }, 100);
+
   // Handle player movement
   socket.on("move", (movement: { x: number; y: number }) => {
-    const speed = 2;
+    const speed = 4;
     if (players.has(socket.id)) {
       const body = players.get(socket.id);
       if (body) {

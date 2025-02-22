@@ -31,7 +31,7 @@ export const initializePlayers = (
       Object.fromEntries(
         Array.from(players, ([id, body]) => [
           id,
-          { x: body.position.x, y: body.position.y },
+          { x: body.position.x, y: body.position.y, isAI: false },
         ])
       )
     );
