@@ -3,7 +3,7 @@ import { io } from "../app";
 import { initializeMovement } from "./movement.game";
 import { initializePlayers } from "./players.game";
 import { intializeWalls } from "./walls.game";
-import { initializeAI } from "./ai.game";
+import { initializeShoot } from "./shoot.game";
 
 // Create engine and world
 const engine = Matter.Engine.create();
@@ -24,8 +24,8 @@ export const startGame = () => {
   }, 1000 / 60);
 
   // Store players here
-  const players = new Map<string, Matter.Body>();
-  const AIPlayers = new Map<string, Matter.Body>();
+  const players = new Map<string, { body: Matter.Body; health: number }>();
+  const bullets = new Map<number, Matter.Body>();
 
   // On player connection
   io.on("connection", (socket) => {
@@ -37,11 +37,11 @@ export const startGame = () => {
     // Players
     initializePlayers(world, players, socket, worldHeight, worldWidth);
 
-    // AI bots
-    initializeAI(world, worldWidth, worldHeight, AIPlayers, socket);
+    // Shooting
+    initializeShoot(socket, engine, players, bullets);
 
     // Movement
-    initializeMovement(socket, players, AIPlayers);
+    initializeMovement(socket, players);
 
     // Player disconnected
     socket.on("disconnect", () => {
@@ -50,7 +50,7 @@ export const startGame = () => {
       // Remove player if disconnected
       const player = players.get(socket.id);
       if (player) {
-        Matter.World.remove(world, player);
+        Matter.World.remove(world, player.body);
         players.delete(socket.id);
 
         io.emit("removePlayer", socket.id);
