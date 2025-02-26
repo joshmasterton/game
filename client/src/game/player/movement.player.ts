@@ -1,9 +1,5 @@
 import { socket } from "../../config/socket.config";
 
-let shootingTarget: string | null = null;
-let shootingInterval: ReturnType<typeof setInterval> | null = null;
-let isShootingClicked: boolean = false;
-
 export const movePlayer = (
   scene: Phaser.Scene,
   players: Map<
@@ -62,7 +58,6 @@ export const movePlayer = (
   const cursors = scene.input.keyboard?.createCursorKeys();
   const pointer = scene.input.activePointer;
   const movement = { x: 0, y: 0 };
-  let clickedPlayer: string | null = null;
 
   // Update movement on click(desktop)
   if (cursors?.up.isDown) movement.y = -1;
@@ -97,67 +92,11 @@ export const movePlayer = (
 
         movement.x = Math.cos(angle) * (distance / 10);
         movement.y = Math.sin(angle) * (distance / 10);
-
-        // Check if the pointer is over any player
-        players.forEach((otherPlayer, otherPlayerId) => {
-          if (
-            otherPlayer.sprite
-              .getBounds()
-              .contains(adjustedPointerX, adjustedPointerY)
-          ) {
-            clickedPlayer = otherPlayerId;
-          }
-        });
-
-        // If clicked on another player, shoot
-        if (clickedPlayer && clickedPlayer !== socket.id) {
-          if (!isShootingClicked) {
-            if (shootingTarget === clickedPlayer) {
-              stopShooting();
-            } else {
-              startShooting(clickedPlayer);
-            }
-            isShootingClicked = true;
-          }
-        }
       }
-    } else {
-      isShootingClicked = false;
     }
   }
 
-  // Reset shooting click when pointer is released
-  scene.input.on("pointerup", () => {
-    isShootingClicked = false;
-  });
-
-  if (!clickedPlayer) {
-    if (movement.x !== 0 || movement.y !== 0) {
-      socket.emit("move", movement);
-    }
-  }
-};
-
-// Start shooting continuously
-export const startShooting = (targetId: string) => {
-  shootingTarget = targetId;
-
-  if (!shootingInterval) {
-    shootingInterval = setInterval(() => {
-      if (shootingTarget) {
-        socket.emit("shoot", {
-          shooterId: socket.id,
-          targetId: shootingTarget,
-        });
-      }
-    }, 50);
-  }
-};
-
-export const stopShooting = () => {
-  shootingTarget = null;
-  if (shootingInterval) {
-    clearInterval(shootingInterval);
-    shootingInterval = null;
+  if (movement.x !== 0 || movement.y !== 0) {
+    socket.emit("move", movement);
   }
 };

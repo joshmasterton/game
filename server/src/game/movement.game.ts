@@ -6,57 +6,9 @@ export const initializeMovement = (
   socket: Socket,
   players: Map<string, { body: Matter.Body }>
 ) => {
-  // Update players movement
-  setInterval(() => {
-    // Check if player is near another player
-    players.forEach((_player, id) => {
-      if (id !== socket.id) {
-        const otherPlayer = players.get(id);
-        const userPlayer = players.get(socket.id);
-
-        if (userPlayer && otherPlayer) {
-          // Check distance between users
-          const distance = Matter.Vector.magnitude(
-            Matter.Vector.sub(
-              userPlayer.body.position,
-              otherPlayer.body.position
-            )
-          );
-
-          // Rotate body if close enough
-          if (distance <= 200) {
-            const angleToOtherPlayer = Math.atan2(
-              otherPlayer.body.position.y - userPlayer.body.position.y,
-              otherPlayer.body.position.x - userPlayer.body.position.x
-            );
-
-            Matter.Body.setAngle(
-              userPlayer.body,
-              angleToOtherPlayer + Math.PI / 2
-            );
-          }
-        }
-      }
-    });
-
-    io.emit(
-      "update",
-      Object.fromEntries(
-        Array.from(players, ([id, player]) => [
-          id,
-          {
-            x: player.body.position.x,
-            y: player.body.position.y,
-            rotation: player.body.angle,
-          },
-        ])
-      )
-    );
-  }, 150);
-
   // Handle player movement
   socket.on("move", (movement: { x: number; y: number }) => {
-    const speed = 6;
+    const speed = 5;
 
     if (players.has(socket.id)) {
       const player = players.get(socket.id);
@@ -108,6 +60,20 @@ export const initializeMovement = (
           }
         }
       });
+
+      io.emit(
+        "update",
+        Object.fromEntries(
+          Array.from(players, ([id, player]) => [
+            id,
+            {
+              x: player.body.position.x,
+              y: player.body.position.y,
+              rotation: player.body.angle,
+            },
+          ])
+        )
+      );
     }
   });
 };

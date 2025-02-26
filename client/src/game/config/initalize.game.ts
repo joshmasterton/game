@@ -36,7 +36,7 @@ export const initializeGame = (
 
         // Make camera follow player
         if (id === socket.id) {
-          scene.cameras.main.startFollow(sprite, true, 0.25, 0.25);
+          scene.cameras.main.startFollow(sprite, true, 0.2, 0.2);
         }
       } else {
         players.get(id)?.sprite.setPosition(x, y);

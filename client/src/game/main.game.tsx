@@ -3,7 +3,6 @@ import { socket } from "../config/socket.config"; // Assuming socket.config.js h
 import Phaser from "phaser";
 import player from "../assets/box.png";
 import { movePlayer } from "./player/movement.player";
-import { shoot } from "./config/shoot.game";
 import { health } from "./player/health.player";
 import { initializeGame } from "./config/initalize.game";
 import { updateGame } from "./config/update.game";
@@ -27,9 +26,6 @@ export const Game = () => {
     const positions = new Map<string, { x: number; y: number }>();
     const rotations = new Map<string, number>();
 
-    // Bullet map
-    const bullets = new Map<number, Phaser.GameObjects.Sprite>();
-
     const config: Phaser.Types.Core.GameConfig = {
       type: Phaser.AUTO,
       width: window.innerWidth,
@@ -43,9 +39,10 @@ export const Game = () => {
         default: "arcade",
       },
       scale: {
-        mode: Phaser.Scale.RESIZE,
+        mode: Phaser.Scale.NONE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
       },
+      parent: gameContainerRef.current,
     };
 
     const game = new Phaser.Game(config);
@@ -65,12 +62,6 @@ export const Game = () => {
       // Initialize
       initializeGame(this, positions, players);
 
-      // Handle real-time updates
-      updateGame(players, positions, rotations);
-
-      // Add shoot mechanic
-      shoot(players, bullets, this);
-
       // Health
       health(players);
 
@@ -87,12 +78,26 @@ export const Game = () => {
     }
 
     function update(this: Phaser.Scene) {
+      // Handle real-time updates
+      updateGame(players, positions, rotations);
+
       // Player movement
       movePlayer(this, players, positions, rotations);
     }
 
-    // Resize when safe-area changes
+    // Resize when window size changes
     const handleResize = () => {
+      if (players.size > 0 && socket.id) {
+        const player = players.get(socket.id);
+        if (player) {
+          game.scene.scenes[0].cameras.main.startFollow(
+            player.sprite,
+            true,
+            0.2,
+            0.2
+          );
+        }
+      }
       game.scale.resize(window.innerWidth, window.innerHeight);
     };
     window.addEventListener("resize", handleResize);

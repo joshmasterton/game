@@ -3,7 +3,6 @@ import { io } from "../app";
 import { initializeMovement } from "./movement.game";
 import { initializePlayers } from "./players.game";
 import { intializeWalls } from "./walls.game";
-import { initializeShoot } from "./shoot.game";
 
 // Create engine and world
 const engine = Matter.Engine.create();
@@ -36,9 +35,6 @@ export const startGame = () => {
 
     // Players
     initializePlayers(world, players, socket, worldHeight, worldWidth);
-
-    // Shooting
-    initializeShoot(socket, engine, players, bullets);
 
     // Movement
     initializeMovement(socket, players);
