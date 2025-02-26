@@ -4,7 +4,10 @@ import Phaser from "phaser";
 import player from "../assets/box.png";
 import { movePlayer } from "./player/movement.player";
 import { shoot } from "./shoot.game";
-import { health, updateHealthBar } from "./player/health.player";
+import { health } from "./player/health.player";
+import { initializeGame } from "./initalize.game";
+import { updateGame } from "./update.game";
+import { initializeWalls } from "./walls.game";
 
 export const Game = () => {
   const gameContainerRef = useRef<HTMLDivElement>(null);
@@ -29,8 +32,8 @@ export const Game = () => {
 
     const config: Phaser.Types.Core.GameConfig = {
       type: Phaser.AUTO,
-      width: 400,
-      height: 400,
+      width: window.innerWidth,
+      height: window.innerHeight,
       scene: {
         preload,
         create,
@@ -38,6 +41,10 @@ export const Game = () => {
       },
       physics: {
         default: "arcade",
+      },
+      scale: {
+        mode: Phaser.Scale.RESIZE,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
       },
     };
 
@@ -55,55 +62,11 @@ export const Game = () => {
       // Client is ready to emit to server
       socket.emit("ready");
 
-      // Listen for the init event after connection
-      socket.on("init", (data: { [id: string]: { x: number; y: number } }) => {
-        // Create sprite if no player or set position if player exists
-        Object.entries(data).forEach(([id, { x, y }]) => {
-          if (!players.has(id)) {
-            const sprite = this.physics.add.sprite(x, y, "player");
-            const scaleX = 35 / sprite.width;
-            const scaleY = 35 / sprite.height;
+      // Initialize
+      initializeGame(this, positions, players);
 
-            sprite.setScale(scaleX, scaleY);
-            sprite.setData("id", id);
-
-            // Create health bar
-            const healthBar = this.add.graphics();
-            healthBar.setScale(35 / sprite.width, 35 / sprite.height);
-            updateHealthBar(healthBar, x, y, 100);
-
-            // Set player in map and position map
-            players.set(id, { sprite: sprite, health: 100, healthBar });
-            positions.set(id, { x, y });
-
-            // Make camera follow player
-            if (id === socket.id) {
-              this.cameras.main.startFollow(sprite, true, 0.25, 0.25);
-            }
-          } else {
-            players.get(id)?.sprite.setPosition(x, y);
-            positions.set(id, { x, y });
-          }
-        });
-      });
-
-      // Handle player movement updates
-      socket.on(
-        "update",
-        (data: {
-          [id: string]: { x: number; y: number; rotation: number };
-        }) => {
-          Object.entries(data).forEach(([id, { x, y, rotation }]) => {
-            if (players.has(id)) {
-              const player = players.get(id);
-              if (player) {
-                positions.set(id, { x, y });
-                rotations.set(id, rotation);
-              }
-            }
-          });
-        }
-      );
+      // Handle real-time updates
+      updateGame(players, positions, rotations);
 
       // Add shoot mechanic
       shoot(players, bullets, this);
@@ -111,29 +74,8 @@ export const Game = () => {
       // Health
       health(players);
 
-      // Listen for wall parameters
-      socket.on(
-        "walls",
-        (
-          walls: {
-            x: number;
-            y: number;
-            width: number;
-            height: number;
-            rotation: number;
-          }[]
-        ) => {
-          // Add walls to scene
-          if (walls) {
-            walls.forEach((wall) => {
-              this.physics.add
-                .staticImage(wall.x, wall.y, "player")
-                .setDisplaySize(wall.width, wall.height)
-                .setRotation(wall.rotation);
-            });
-          }
-        }
-      );
+      // Initialize walls
+      initializeWalls(this);
 
       // Remove disconnected player
       socket.on("removePlayer", (playerId: string) => {
@@ -149,9 +91,25 @@ export const Game = () => {
       movePlayer(this, players, positions, rotations);
     }
 
+    // Resize when safe-area changes
+    const handleResize = () => {
+      game.scale.resize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener("resize", handleResize);
+
+    // Prevent double-tap to zoom
+    const preventZoom = (e: TouchEvent) => {
+      if (e.touches.length > 1) {
+        e.preventDefault();
+      }
+    };
+    document.addEventListener("touchmove", preventZoom, { passive: false });
+
     // Cleanup socket listeners
     return () => {
       socket.off("init");
+      window.removeEventListener("resize", handleResize);
+      document.removeEventListener("touchmove", preventZoom);
       game.destroy(true);
     };
   }, []);

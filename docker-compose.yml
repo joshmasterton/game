@@ -13,5 +13,6 @@ services:
       - "3001:3001"
     volumes:
       - ./client/src:/app/src
+      - ./client/index.html:/app/index.html
     environment:
       - CHOKIDAR_USEPOLLING=true

@@ -26,11 +26,5 @@ export const App = () => {
     };
   }, []);
 
-  return (
-    <div>
-      <h1>Welcome to game</h1>
-      <div>{isConnected ? "Connected" : "Disconnected"}</div>
-      {isConnected ? <Game /> : undefined}
-    </div>
-  );
+  return <div>{isConnected ? <Game /> : undefined}</div>;
 };

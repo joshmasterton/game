@@ -24,7 +24,7 @@ export const initializeMovement = (
           );
 
           // Rotate body if close enough
-          if (distance <= 300) {
+          if (distance <= 200) {
             const angleToOtherPlayer = Math.atan2(
               otherPlayer.body.position.y - userPlayer.body.position.y,
               otherPlayer.body.position.x - userPlayer.body.position.x
@@ -94,7 +94,7 @@ export const initializeMovement = (
             );
 
             // Rotate body if close enough
-            if (distance <= 300) {
+            if (distance <= 200) {
               const angleToOtherPlayer = Math.atan2(
                 otherPlayer.body.position.y - userPlayer.body.position.y,
                 otherPlayer.body.position.x - userPlayer.body.position.x
