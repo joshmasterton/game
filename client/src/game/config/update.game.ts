@@ -1,4 +1,4 @@
-import { socket } from "../config/socket.config";
+import { socket } from "../../config/socket.config";
 
 // Handle player movement updates
 export const updateGame = (

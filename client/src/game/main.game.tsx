@@ -3,11 +3,11 @@ import { socket } from "../config/socket.config"; // Assuming socket.config.js h
 import Phaser from "phaser";
 import player from "../assets/box.png";
 import { movePlayer } from "./player/movement.player";
-import { shoot } from "./shoot.game";
+import { shoot } from "./config/shoot.game";
 import { health } from "./player/health.player";
-import { initializeGame } from "./initalize.game";
-import { updateGame } from "./update.game";
-import { initializeWalls } from "./walls.game";
+import { initializeGame } from "./config/initalize.game";
+import { updateGame } from "./config/update.game";
+import { initializeWalls } from "./config/walls.game";
 
 export const Game = () => {
   const gameContainerRef = useRef<HTMLDivElement>(null);
@@ -96,6 +96,7 @@ export const Game = () => {
       game.scale.resize(window.innerWidth, window.innerHeight);
     };
     window.addEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", handleResize);
 
     // Prevent double-tap to zoom
     const preventZoom = (e: TouchEvent) => {
@@ -109,6 +110,7 @@ export const Game = () => {
     return () => {
       socket.off("init");
       window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
       document.removeEventListener("touchmove", preventZoom);
       game.destroy(true);
     };

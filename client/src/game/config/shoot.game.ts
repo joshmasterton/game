@@ -1,4 +1,4 @@
-import { socket } from "../config/socket.config";
+import { socket } from "../../config/socket.config";
 
 export const shoot = (
   players: Map<string, { sprite: Phaser.GameObjects.Sprite; health: number }>,

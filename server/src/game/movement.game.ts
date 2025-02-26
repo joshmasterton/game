@@ -52,7 +52,7 @@ export const initializeMovement = (
         ])
       )
     );
-  }, 100);
+  }, 150);
 
   // Handle player movement
   socket.on("move", (movement: { x: number; y: number }) => {

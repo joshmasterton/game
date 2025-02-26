@@ -1,5 +1,5 @@
-import { socket } from "../config/socket.config";
-import { updateHealthBar } from "./player/health.player";
+import { socket } from "../../config/socket.config";
+import { updateHealthBar } from "../player/health.player";
 
 // Listen for the init event after connection
 export const initializeGame = (

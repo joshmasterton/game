@@ -1,4 +1,4 @@
-import { socket } from "../config/socket.config";
+import { socket } from "../../config/socket.config";
 
 // Listen for wall parameters
 export const initializeWalls = (scene: Phaser.Scene) => {
