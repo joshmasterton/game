@@ -68,8 +68,8 @@ export const Game = () => {
       // Real-time player positions
       updatePositions(players);
 
-			// Target another player
-			targetPlayer(this, players);
+      // Target another player
+      targetPlayer(this, players);
 
       // Remove disconnected player
       socket.on("removePlayer", (playerId: string) => {

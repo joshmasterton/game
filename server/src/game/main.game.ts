@@ -23,7 +23,10 @@ export const mainGame = () => {
   }, 1000 / 60);
 
   // Store players here
-  const players = new Map<string, { body: Matter.Body; targetId: string }>();
+  const players = new Map<
+    string,
+    { body: Matter.Body; targetId: string | null }
+  >();
 
   // On player connection
   io.on("connection", (socket) => {

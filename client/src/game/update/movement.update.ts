@@ -7,7 +7,13 @@ const targetRotations = new Map<string, number>();
 
 export const updateMovement = (
   scene: Phaser.Scene,
-  players: Map<string, { sprite: Phaser.GameObjects.Sprite }>
+  players: Map<
+    string,
+    {
+      sprite: Phaser.GameObjects.Sprite;
+      healthBar: Phaser.GameObjects.Graphics;
+    }
+  >
 ) => {
   if (socket.id) {
     // Get player and keys
@@ -59,7 +65,13 @@ export const updateMovement = (
 
 export const targetPlayer = (
   scene: Phaser.Scene,
-  players: Map<string, { sprite: Phaser.GameObjects.Sprite }>
+  players: Map<
+    string,
+    {
+      sprite: Phaser.GameObjects.Sprite;
+      healthBar: Phaser.GameObjects.Graphics;
+    }
+  >
 ) => {
   // If clicked on player target otherwise un-target
   scene.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
@@ -105,14 +117,19 @@ export const targetPlayer = (
 // Is player clicking on another player
 export const isClickingOnOtherPlayer = (
   pointer: Phaser.Math.Vector2,
-  players: Map<string, { sprite: Phaser.GameObjects.Sprite }>
+  players: Map<
+    string,
+    {
+      sprite: Phaser.GameObjects.Sprite;
+      healthBar: Phaser.GameObjects.Graphics;
+    }
+  >
 ) => {
   for (const [id, player] of players) {
-    if (socket.id) {
-      if (player === players.get(socket.id)) return false;
-      if (player.sprite.getBounds().contains(pointer.x, pointer.y)) {
-        return id;
-      }
+    if (id === socket.id) continue;
+
+    if (player.sprite.getBounds().contains(pointer.x, pointer.y)) {
+      return id;
     }
   }
 

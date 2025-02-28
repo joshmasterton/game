@@ -4,7 +4,7 @@ import { io } from "../../app";
 
 export const updateMovement = (
   socket: Socket,
-  players: Map<string, { body: Matter.Body; targetId: string }>
+  players: Map<string, { body: Matter.Body; targetId: string | null }>
 ) => {
   // Update velocity
   socket.on("move", ({ x, y }: { x: number; y: number }) => {
@@ -33,6 +33,8 @@ export const updateMovement = (
           // Apply smooth rotation towards target
           const newAngle = player.body.angle + angleDifference * 0.1;
           Matter.Body.setAngle(player.body, newAngle);
+        } else {
+          player.targetId = null;
         }
       } else {
         // Calculate angle and set rotation
@@ -62,14 +64,20 @@ export const updateMovement = (
       const player = players.get(socket.id);
 
       if (player) {
-        player.targetId = id;
+        const targetPlayer = players.get(id);
+
+        if (targetPlayer) {
+          player.targetId = id;
+        } else {
+          player.targetId = null;
+        }
       }
     });
   });
 };
 
 export const updatePositions = (
-  players: Map<string, { body: Matter.Body; targetId: string }>
+  players: Map<string, { body: Matter.Body; targetId: string | null }>
 ) => {
   setInterval(() => {
     const positions: Record<
@@ -79,22 +87,24 @@ export const updatePositions = (
 
     // Map over players for positions
     players.forEach((player, id) => {
-      const targetPlayer = players.get(player.targetId);
+      if (player.targetId) {
+        const targetPlayer = players.get(player.targetId);
 
-      if (targetPlayer) {
-        // Calculate direction towards the target
-        const dx = targetPlayer.body.position.x - player.body.position.x;
-        const dy = targetPlayer.body.position.y - player.body.position.y;
-        const targetAngle = Math.atan2(dy, dx);
+        if (targetPlayer) {
+          // Calculate direction towards the target
+          const dx = targetPlayer.body.position.x - player.body.position.x;
+          const dy = targetPlayer.body.position.y - player.body.position.y;
+          const targetAngle = Math.atan2(dy, dx);
 
-        // Smoothly rotate towards the target
-        let angleDifference = targetAngle - player.body.angle;
-        while (angleDifference > Math.PI) angleDifference -= Math.PI * 2;
-        while (angleDifference < -Math.PI) angleDifference += Math.PI * 2;
+          // Smoothly rotate towards the target
+          let angleDifference = targetAngle - player.body.angle;
+          while (angleDifference > Math.PI) angleDifference -= Math.PI * 2;
+          while (angleDifference < -Math.PI) angleDifference += Math.PI * 2;
 
-        // Apply smooth rotation towards target
-        const newAngle = player.body.angle + angleDifference * 0.1;
-        Matter.Body.setAngle(player.body, newAngle);
+          // Apply smooth rotation towards target
+          const newAngle = player.body.angle + angleDifference * 0.1;
+          Matter.Body.setAngle(player.body, newAngle);
+        }
       }
 
       positions[id] = {
