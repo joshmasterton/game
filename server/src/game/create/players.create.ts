@@ -1,10 +1,10 @@
 import Matter from "matter-js";
-import { io } from "../app";
 import { Socket } from "socket.io";
+import { io } from "../../app";
 
 export const initializePlayers = (
   world: Matter.World,
-  players: Map<string, { body: Matter.Body; health: number }>,
+  players: Map<string, { body: Matter.Body }>,
   socket: Socket,
   worldHeight: number,
   worldWidth: number
@@ -15,26 +15,21 @@ export const initializePlayers = (
     Math.random() * 400,
     35,
     35,
-    {
-      frictionAir: 0.1,
-      label: socket.id,
-    }
+    { label: socket.id, frictionAir: 0.1 }
   );
 
   // Add player physics to world
   Matter.World.add(world, player);
-  players.set(socket.id, { body: player, health: 100 });
+  players.set(socket.id, { body: player });
 
   // Notify client of active players
   socket.on("ready", () => {
-    io.emit(
-      "init",
-      Object.fromEntries(
-        Array.from(players, ([id, player]) => [
-          id,
-          { x: player.body.position.x, y: player.body.position.y },
-        ])
-      )
-    );
+    const positions: Record<string, { x: number; y: number }> = {};
+
+    players.forEach((player, id) => {
+      positions[id] = { x: player.body.position.x, y: player.body.position.y };
+    });
+
+    io.emit("initializePlayers", positions);
   });
 };

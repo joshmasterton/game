@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import { Server } from "socket.io";
 import { createServer } from "http";
-import { startGame } from "./game/start.game";
+import { mainGame } from "./game/main.game";
 import cors from "cors";
 
 // Import env variables
@@ -35,7 +35,7 @@ app.get("/", (req, res) => {
 });
 
 // Initialize game
-startGame();
+mainGame();
 
 // Listen to server on port
 server.listen(PORT, () => {

@@ -14,7 +14,7 @@ export const initializeWalls = (scene: Phaser.Scene) => {
       }[]
     ) => {
       // Add walls to scene
-      if (walls) {
+      if (walls && walls.length > 0 && scene) {
         walls.forEach((wall) => {
           scene.physics.add
             .staticImage(wall.x, wall.y, "player")

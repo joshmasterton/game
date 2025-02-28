@@ -1,12 +1,15 @@
 import { useEffect, useRef } from "react";
 import { socket } from "../config/socket.config"; // Assuming socket.config.js handles the socket initialization
+import { initializeWalls } from "./create/walls.create";
 import Phaser from "phaser";
 import player from "../assets/box.png";
-import { movePlayer } from "./player/movement.player";
-import { health } from "./player/health.player";
-import { initializeGame } from "./config/initalize.game";
-import { updateGame } from "./config/update.game";
-import { initializeWalls } from "./config/walls.game";
+import { initializePlayers } from "./create/players.create";
+import {
+  smoothUpdate,
+  targetPlayer,
+  updateMovement,
+  updatePositions,
+} from "./update/movement.update";
 
 export const Game = () => {
   const gameContainerRef = useRef<HTMLDivElement>(null);
@@ -19,12 +22,9 @@ export const Game = () => {
       string,
       {
         sprite: Phaser.GameObjects.Sprite;
-        health: number;
         healthBar: Phaser.GameObjects.Graphics;
       }
     >();
-    const positions = new Map<string, { x: number; y: number }>();
-    const rotations = new Map<string, number>();
 
     const config: Phaser.Types.Core.GameConfig = {
       type: Phaser.AUTO,
@@ -40,7 +40,7 @@ export const Game = () => {
       },
       scale: {
         mode: Phaser.Scale.NONE,
-        autoCenter: Phaser.Scale.CENTER_BOTH,
+        autoCenter: Phaser.Scale.CENTER_HORIZONTALLY,
       },
       parent: gameContainerRef.current,
     };
@@ -59,30 +59,34 @@ export const Game = () => {
       // Client is ready to emit to server
       socket.emit("ready");
 
-      // Initialize
-      initializeGame(this, positions, players);
-
-      // Health
-      health(players);
+      // Initialize players
+      initializePlayers(this, players);
 
       // Initialize walls
       initializeWalls(this);
+
+      // Real-time player positions
+      updatePositions(players);
+
+			// Target another player
+			targetPlayer(this, players);
 
       // Remove disconnected player
       socket.on("removePlayer", (playerId: string) => {
         if (players.has(playerId)) {
           players.get(playerId)?.sprite.destroy();
+          players.get(playerId)?.healthBar.destroy();
           players.delete(playerId);
         }
       });
     }
 
     function update(this: Phaser.Scene) {
-      // Handle real-time updates
-      updateGame(players, positions, rotations);
+      // Update players movement
+      updateMovement(this, players);
 
-      // Player movement
-      movePlayer(this, players, positions, rotations);
+      // Smooth movement
+      smoothUpdate(players);
     }
 
     // Resize when window size changes

@@ -1,8 +1,8 @@
 import Matter from "matter-js";
 import { io } from "../app";
-import { initializeMovement } from "./movement.game";
-import { initializePlayers } from "./players.game";
-import { intializeWalls } from "./walls.game";
+import { intializeWalls } from "./create/walls.create";
+import { initializePlayers } from "./create/players.create";
+import { updateMovement, updatePositions } from "./update/movement.update";
 
 // Create engine and world
 const engine = Matter.Engine.create();
@@ -16,15 +16,14 @@ const worldHeight = 2000;
 engine.gravity.y = 0;
 engine.gravity.x = 0;
 
-export const startGame = () => {
+export const mainGame = () => {
   // Engine update rate
   setInterval(() => {
     Matter.Engine.update(engine, 1000 / 60);
   }, 1000 / 60);
 
   // Store players here
-  const players = new Map<string, { body: Matter.Body; health: number }>();
-  const bullets = new Map<number, Matter.Body>();
+  const players = new Map<string, { body: Matter.Body; targetId: string }>();
 
   // On player connection
   io.on("connection", (socket) => {
@@ -37,7 +36,10 @@ export const startGame = () => {
     initializePlayers(world, players, socket, worldHeight, worldWidth);
 
     // Movement
-    initializeMovement(socket, players);
+    updateMovement(socket, players);
+
+    // Real-time user positions
+    updatePositions(players);
 
     // Player disconnected
     socket.on("disconnect", () => {
