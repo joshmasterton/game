@@ -45,6 +45,8 @@ export const initializePlayers = (
             updateHealthBar(player.healthBar, player.sprite, 100);
           }
         }
+
+        console.log(players);
       });
     }
   );
