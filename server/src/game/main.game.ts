@@ -28,6 +28,11 @@ export const mainGame = () => {
     { body: Matter.Body; targetId: string | null }
   >();
 
+  const lastPositions = new Map<
+    string,
+    { x: number; y: number; rotation: number }
+  >();
+
   // On player connection
   io.on("connection", (socket) => {
     console.log(`Player connected: ${socket.id}`);
@@ -42,7 +47,7 @@ export const mainGame = () => {
     updateMovement(socket, players);
 
     // Real-time user positions
-    updatePositions(players);
+    updatePositions(players, lastPositions);
 
     // Player disconnected
     socket.on("disconnect", () => {

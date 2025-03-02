@@ -17,7 +17,7 @@ export const initializeWalls = (scene: Phaser.Scene) => {
       if (walls && walls.length > 0 && scene) {
         walls.forEach((wall) => {
           scene.physics.add
-            .staticImage(wall.x, wall.y, "player")
+            .staticImage(wall.x, wall.y, "wall")
             .setDisplaySize(wall.width, wall.height)
             .setRotation(wall.rotation);
         });

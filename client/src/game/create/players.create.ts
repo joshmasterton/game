@@ -13,9 +13,9 @@ export const initializePlayers = (
 ) => {
   socket.on(
     "initializePlayers",
-    (positions: Record<string, { x: number; y: number }>) => {
+    (positions: Record<string, { x: number; y: number; rotation: number }>) => {
       // Create sprite if no player or set position if player exists
-      Object.entries(positions).forEach(([id, { x, y }]) => {
+      Object.entries(positions).forEach(([id, { x, y, rotation }]) => {
         if (!players.has(id)) {
           const sprite = scene.physics.add.sprite(x, y, "player");
 
@@ -23,6 +23,7 @@ export const initializePlayers = (
           const scaleX = 35 / sprite.width;
           const scaleY = 35 / sprite.height;
           sprite.setScale(scaleX, scaleY);
+          sprite.setRotation(rotation);
           sprite.setData("id", id);
           sprite.setOrigin(0.5, 0.5);
 
@@ -35,7 +36,7 @@ export const initializePlayers = (
 
           // Make camera follow player
           if (id === socket.id) {
-            scene.cameras.main.startFollow(sprite, true, 0.2, 0.2);
+            scene.cameras.main.startFollow(sprite, false, 0.3, 0.3);
           }
         } else {
           const player = players.get(id);

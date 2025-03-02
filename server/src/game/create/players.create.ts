@@ -15,7 +15,7 @@ export const initializePlayers = (
     Math.random() * 400,
     35,
     35,
-    { label: socket.id, frictionAir: 0.1 }
+    { label: socket.id, frictionAir: 0.4 }
   );
 
   // Add player physics to world
@@ -24,10 +24,17 @@ export const initializePlayers = (
 
   // Notify client of active players
   socket.on("ready", () => {
-    const positions: Record<string, { x: number; y: number }> = {};
+    const positions: Record<
+      string,
+      { x: number; y: number; rotation: number }
+    > = {};
 
     players.forEach((player, id) => {
-      positions[id] = { x: player.body.position.x, y: player.body.position.y };
+      positions[id] = {
+        x: player.body.position.x,
+        y: player.body.position.y,
+        rotation: player.body.angle,
+      };
     });
 
     io.emit("initializePlayers", positions);

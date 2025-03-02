@@ -3,6 +3,7 @@ import { socket } from "../config/socket.config"; // Assuming socket.config.js h
 import { initializeWalls } from "./create/walls.create";
 import Phaser from "phaser";
 import player from "../assets/box.png";
+import wall from "../assets/box2.png";
 import { initializePlayers } from "./create/players.create";
 import {
   smoothUpdate,
@@ -49,6 +50,7 @@ export const Game = () => {
 
     function preload(this: Phaser.Scene) {
       this.load.image("player", player);
+      this.load.image("wall", wall);
     }
 
     function create(this: Phaser.Scene) {

@@ -43,8 +43,8 @@ export const updateMovement = (
         // If pointer is on another player dont move otherwise move
         if (!clickedOnPlayer) {
           if (player.sprite) {
-            const dx = pointer.worldX - player.sprite.x;
-            const dy = pointer.worldY - player.sprite.y;
+            const dx = worldPoint.x - player.sprite.x;
+            const dy = worldPoint.y - player.sprite.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
 
             if (distance > 10) {
@@ -126,10 +126,10 @@ export const isClickingOnOtherPlayer = (
   >
 ) => {
   for (const [id, player] of players) {
-    if (id === socket.id) continue;
-
-    if (player.sprite.getBounds().contains(pointer.x, pointer.y)) {
-      return id;
+    if (id !== socket.id) {
+      if (player.sprite.getBounds().contains(pointer.x, pointer.y)) {
+        return id;
+      }
     }
   }
 
@@ -171,26 +171,30 @@ export const smoothUpdate = (
 
     if (player.sprite && targetPosition && targetRotation) {
       // Smoothly move to new position
-      player.sprite.x = Phaser.Math.Interpolation.Linear(
-        [player.sprite.x, targetPosition.x],
+      player.sprite.x = Phaser.Math.Linear(
+        player.sprite.x,
+        targetPosition.x,
         0.1
       );
-      player.sprite.y = Phaser.Math.Interpolation.Linear(
-        [player.sprite.y, targetPosition.y],
+
+      player.sprite.y = Phaser.Math.Linear(
+        player.sprite.y,
+        targetPosition.y,
+        0.1
+      );
+
+      // Normalize the target rotation to the range [-PI, PI]
+      const normalizedTarget = Phaser.Math.Angle.Wrap(targetRotation);
+
+      // Rotate to player
+      player.sprite.rotation = Phaser.Math.Angle.RotateTo(
+        player.sprite.rotation,
+        normalizedTarget,
         0.1
       );
 
       // Update player healthbar position
       updateHealthBar(player.healthBar, player.sprite, 100);
-
-      // Ensure rotation smoothly interpolates, handling angle wrapping
-      let angleDifference = targetRotation - player.sprite.rotation;
-
-      // Normalize angle difference to [-PI, PI] to prevent long rotation paths
-      angleDifference = Phaser.Math.Angle.Wrap(angleDifference);
-
-      // Apply smooth rotation interpolation
-      player.sprite.rotation = player.sprite.rotation + angleDifference * 0.2;
     }
   });
 };

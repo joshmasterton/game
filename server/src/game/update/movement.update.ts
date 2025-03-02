@@ -49,8 +49,7 @@ export const updateMovement = (
         while (angleDifference < -Math.PI) angleDifference += Math.PI * 2;
 
         // Apply smoothing
-        const rotationLerpSpeed = 0.1;
-        const newAngle = currentAngle + angleDifference * rotationLerpSpeed;
+        const newAngle = currentAngle + angleDifference * 0.1;
 
         Matter.Body.setAngle(player.body, newAngle);
       }
@@ -77,44 +76,73 @@ export const updateMovement = (
 };
 
 export const updatePositions = (
-  players: Map<string, { body: Matter.Body; targetId: string | null }>
+  players: Map<string, { body: Matter.Body; targetId: string | null }>,
+  lastPositions: Map<string, { x: number; y: number; rotation: number }>
 ) => {
   setInterval(() => {
     const positions: Record<
       string,
-      { x: number; y: number; rotation: number }
+      {
+        x: number;
+        y: number;
+        velocityX: number;
+        velocityY: number;
+        rotation: number;
+      }
     > = {};
+
+    // Has player moved
+    let hasMoved = false;
 
     // Map over players for positions
     players.forEach((player, id) => {
-      if (player.targetId) {
-        const targetPlayer = players.get(player.targetId);
+      // Players last position
+      const lastPos = lastPositions.get(id);
+      const dx = player.body.position.x - (lastPos?.x || 0);
+      const dy = player.body.position.y - (lastPos?.y || 0);
 
-        if (targetPlayer) {
-          // Calculate direction towards the target
-          const dx = targetPlayer.body.position.x - player.body.position.x;
-          const dy = targetPlayer.body.position.y - player.body.position.y;
-          const targetAngle = Math.atan2(dy, dx);
+      if (Math.sqrt(dx * dx + dy * dy) > 2) {
+        hasMoved = true;
 
-          // Smoothly rotate towards the target
-          let angleDifference = targetAngle - player.body.angle;
-          while (angleDifference > Math.PI) angleDifference -= Math.PI * 2;
-          while (angleDifference < -Math.PI) angleDifference += Math.PI * 2;
+        if (player.targetId) {
+          const targetPlayer = players.get(player.targetId);
 
-          // Apply smooth rotation towards target
-          const newAngle = player.body.angle + angleDifference * 0.1;
-          Matter.Body.setAngle(player.body, newAngle);
+          if (targetPlayer) {
+            // Calculate direction towards the target
+            const dx = targetPlayer.body.position.x - player.body.position.x;
+            const dy = targetPlayer.body.position.y - player.body.position.y;
+            const targetAngle = Math.atan2(dy, dx);
+
+            // Smoothly rotate towards the target
+            let angleDifference = targetAngle - player.body.angle;
+            while (angleDifference > Math.PI) angleDifference -= Math.PI * 2;
+            while (angleDifference < -Math.PI) angleDifference += Math.PI * 2;
+
+            // Apply smooth rotation towards target
+            const newAngle = player.body.angle + angleDifference * 0.1;
+            Matter.Body.setAngle(player.body, newAngle);
+          }
         }
       }
 
       positions[id] = {
         x: player.body.position.x,
         y: player.body.position.y,
+        velocityX: player.body.velocity.x,
+        velocityY: player.body.velocity.y,
         rotation: player.body.angle,
       };
 
+      lastPositions.set(id, {
+        x: player.body.position.x,
+        y: player.body.position.y,
+        rotation: player.body.angle,
+      });
+
       // Update clients with new positions
-      io.emit("updatePositions", positions);
+      if (hasMoved) {
+        io.emit("updatePositions", positions);
+      }
     });
   }, 100);
 };
