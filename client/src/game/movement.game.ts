@@ -21,7 +21,11 @@ export const movement = (
   if (cursors.right.isDown) movement.x += speed;
 
   if (player.body) {
-    // Emit movement to the server
-    socket.emit("move", movement);
+    if (movement.x !== 0 || movement.y !== 0) {
+      player.body.velocity.x += movement.x;
+      player.body.velocity.y += movement.y;
+      // Emit movement to the server
+      socket.emit("move", movement);
+    }
   }
 };
