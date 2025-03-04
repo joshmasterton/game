@@ -1,7 +1,7 @@
 import { socket } from "../config/socket.config";
 
 export const screen = (
-  players: Map<string, Phaser.GameObjects.Sprite>,
+  players: Map<string, Phaser.GameObjects.Image>,
   game: Phaser.Game
 ) => {
   // Resize when window size changes

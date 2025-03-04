@@ -1,23 +1,22 @@
-import Matter from "matter-js";
 import { io } from "../app.js";
+import Matter from "matter-js";
 export const createPlayer = (socket, world, players) => {
-    // Create a Matter.js body
-    const player = Matter.Bodies.rectangle(400, 400, 30, 30, {
-        restitution: 1,
-        frictionAir: 0.1,
-    });
     // On client ready
+    const spawnX = Math.random() * 400;
+    const spawnY = Math.random() * 400;
+    const player = Matter.Bodies.rectangle(spawnX, spawnY, 30, 30, {
+        frictionAir: 0.1,
+        restitution: 1,
+    });
     socket.on("ready", () => {
-        // Add player to world
+        // Create player body
         Matter.World.add(world, player);
-        // Add new player to server
         players.set(socket.id, player);
         // Send players to client
         io.emit("players", Array.from(players.entries()).map(([id, body]) => ({
             id,
             x: body.position.x,
             y: body.position.y,
-            angle: body.angle,
         })));
     });
     // Player disconnected

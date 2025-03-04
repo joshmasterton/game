@@ -5,19 +5,21 @@ export const update = (
   engine: Matter.Engine,
   players: Map<string, Matter.Body>
 ) => {
-  // Broadcast players to all clients
+  // Emit updated player positions to all clients
   setInterval(() => {
     Matter.Engine.update(engine, 1000 / 60);
 
-    // Send players to client
     io.emit(
       "players",
-      Array.from(players.entries()).map(([id, body]) => ({
-        id,
-        x: body.position.x,
-        y: body.position.y,
-        angle: body.angle,
-      }))
+      Array.from(players.entries()).map(([id, body]) => {
+        console.log(body.position.x);
+        return {
+          id,
+          x: body.position.x,
+          y: body.position.y,
+          velocity: body.velocity,
+        };
+      })
     );
-  }, 1000 / 60);
+  }, 150);
 };
